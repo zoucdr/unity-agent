@@ -144,11 +144,19 @@ namespace Unity3DAgent.Core
                 var mcpClient = GetComponent<MCPClient>();
                 if (mcpClient != null && mcpClient.IsConnected)
                 {
-                    return await mcpClient.ExecuteTask(task);
+                    try
+                    {
+                        return await mcpClient.ExecuteTask(task);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[SkillExecutor] MCP execution failed: {ex.Message}");
+                        throw;
+                    }
                 }
                 
-                // Fallback: Return task description
-                return $"No handler found for task: {task.Description}";
+                // No handler available
+                throw new Exception($"No handler (skill or MCP tool) found for task: {task.Description}");
             }
         }
     }

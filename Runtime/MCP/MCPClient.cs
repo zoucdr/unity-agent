@@ -149,10 +149,18 @@ namespace Unity3DAgent.Core
             
             if (tool != null)
             {
-                return await CallMCPTool(tool, task);
+                try
+                {
+                    return await CallMCPTool(tool, task);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[MCPClient] Tool execution failed: {ex.Message}");
+                    throw new Exception($"MCP tool '{tool.Name}' execution failed: {ex.Message}", ex);
+                }
             }
 
-            return "No MCP tool found for task";
+            throw new Exception($"No MCP tool found for task: {task.Description}");
         }
 
         /// <summary>

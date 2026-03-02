@@ -102,17 +102,18 @@ namespace Unity3DAgent.Core
                 ""max_tokens"": {config.MaxTokens}
             }}";
 
-            var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
             
             if (!string.IsNullOrEmpty(config.ApiKey))
             {
-                httpClient.DefaultRequestHeaders.Authorization = 
+                request.Headers.Authorization = 
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.ApiKey);
             }
             
             try
             {
-                var response = await httpClient.PostAsync(url, content);
+                var response = await httpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
                 
                 var responseText = await response.Content.ReadAsStringAsync();
@@ -144,17 +145,18 @@ namespace Unity3DAgent.Core
                 ""max_tokens"": {config.MaxTokens}
             }}";
 
-            var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
             
             if (!string.IsNullOrEmpty(config.ApiKey))
             {
-                httpClient.DefaultRequestHeaders.Add("x-api-key", config.ApiKey);
-                httpClient.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
+                request.Headers.Add("x-api-key", config.ApiKey);
+                request.Headers.Add("anthropic-version", "2023-06-01");
             }
             
             try
             {
-                var response = await httpClient.PostAsync(url, content);
+                var response = await httpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
                 
                 var responseText = await response.Content.ReadAsStringAsync();
