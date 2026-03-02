@@ -1,0 +1,19 @@
+{
+  "name": "com.zoucdr.unity3d-agent",
+  "version": "1.0.0",
+  "displayName": "Unity3D AI Agent",
+  "description": "AI Agent plugin for Unity3D with task planning, skill management, and MCP client support",
+  "unity": "2020.3",
+  "author": {
+    "name": "zoucdr",
+    "url": "https://github.com/zoucdr/unity3d-agent"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "ollama",
+    "mcp",
+    "task-planning"
+  ],
+  "dependencies": {}
+}
