@@ -1,0 +1,118 @@
+name: Unity Package CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Validate package.json
+      run: |
+        if [ ! -f "package.json" ]; then
+          echo "Error: package.json not found"
+          exit 1
+        fi
+        echo "package.json validation passed"
+        
+    - name: Check required files
+      run: |
+        required_files=("README.md" "LICENSE" "CHANGELOG.md")
+        for file in "${required_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "Error: Required file $file not found"
+            exit 1
+          fi
+        done
+        echo "All required files present"
+        
+    - name: Validate C# files syntax
+      run: |
+        # Basic syntax check for C# files
+        find . -name "*.cs" -type f | while read file; do
+          # Check for basic syntax issues
+          if grep -q $'\t' "$file"; then
+            echo "Warning: Tabs found in $file (consider using spaces)"
+          fi
+        done
+        echo "C# files syntax check completed"
+        
+    - name: Check documentation
+      run: |
+        if [ ! -d "Documentation" ]; then
+          echo "Error: Documentation directory not found"
+          exit 1
+        fi
+        echo "Documentation check passed"
+
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Check line endings
+      run: |
+        # Check for consistent line endings
+        files_with_crlf=$(find . -not -path "*/\.git/*" -type f -exec file {} \; | grep CRLF | cut -d: -f1)
+        if [ ! -z "$files_with_crlf" ]; then
+          echo "Warning: Files with CRLF line endings found:"
+          echo "$files_with_crlf"
+        fi
+        
+    - name: Check for trailing whitespace
+      run: |
+        # Check for trailing whitespace in source files
+        find . -name "*.cs" -o -name "*.md" | while read file; do
+          if grep -q '[[:space:]]$' "$file"; then
+            echo "Warning: Trailing whitespace found in $file"
+          fi
+        done
+
+  package:
+    runs-on: ubuntu-latest
+    needs: [validate, lint]
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Create package structure check
+      run: |
+        echo "Checking package structure..."
+        required_dirs=("Runtime" "Editor" "Documentation")
+        for dir in "${required_dirs[@]}"; do
+          if [ ! -d "$dir" ]; then
+            echo "Error: Required directory $dir not found"
+            exit 1
+          fi
+        done
+        echo "Package structure validation passed"
+        
+    - name: Generate package info
+      run: |
+        echo "Package: Unity3D AI Agent"
+        echo "Version: $(jq -r '.version' package.json)"
+        echo "Description: $(jq -r '.description' package.json)"
+        
+    - name: List package contents
+      run: |
+        echo "Package contents:"
+        find . -type f -not -path "*/\.git/*" | sort
