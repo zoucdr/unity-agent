@@ -20,6 +20,8 @@ namespace Unity3DAgent.Editor
             agentObj.AddComponent<SkillManager>();
             agentObj.AddComponent<SkillExecutor>();
             agentObj.AddComponent<MCPClient>();
+            agentObj.AddComponent<RAGManager>();
+            agentObj.AddComponent<SubAgentManager>();
             
             // Try to find or create default config
             var config = FindOrCreateDefaultConfig();
@@ -64,6 +66,18 @@ namespace Unity3DAgent.Editor
             
             config.MaxParallelTasks = 5;
             config.TaskTimeoutSeconds = 300f;
+
+            config.RAGConfig = new RAGConfig
+            {
+                Enabled = false,
+                AutoLoadDocuments = false,
+                TopKResults = 3
+            };
+
+            config.SkillLoaderConfig = new SkillLoaderConfig
+            {
+                Enabled = false
+            };
             
             // Save the asset
             string path = "Assets/DefaultAIAgentConfig.asset";
