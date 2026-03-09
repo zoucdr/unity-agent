@@ -34,7 +34,7 @@ namespace Unity3DAgent.Editor
         private string subAgentName = "";
         private string subAgentCommand = "";
 
-        [MenuItem("Window/AI Agent")]
+        [MenuItem("Window/AI Agent/Control Panel")]
         public static void ShowWindow()
         {
             var window = GetWindow<AIAgentWindow>("AI Agent");
