@@ -53,20 +53,21 @@ namespace Unity3DAgent.Core
         {
             var url = $"{config.BaseUrl}/api/generate";
             
-            var requestBody = new
-            {
-                model = config.ModelName,
-                prompt = $"{systemPrompt}\n\nUser: {userPrompt}\n\nAssistant:",
-                stream = false,
-                options = new
-                {
-                    temperature = config.Temperature,
-                    num_predict = config.MaxTokens
-                }
-            };
+            var requestBody = $@"{{
+                ""model"": ""{config.ModelName}"",
+                ""prompt"": ""{EscapeJson(systemPrompt)}\n\nUser: {EscapeJson(userPrompt)}\n\nAssistant:"",
+                ""stream"": false,
+                ""options"": {{
+                    ""temperature"": {config.Temperature},
+                    ""num_predict"": {config.MaxTokens}
+                }}
+            }}";
+            
+            Debug.Log($"[LLMClient] Ollama API model: {config.ModelName}");
+            Debug.Log($"[LLMClient] Ollama API url: {url}");
+            Debug.Log($"[LLMClient] Ollama API request: {requestBody}");
 
-            var json = JsonUtility.ToJson(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
             
             try
             {
