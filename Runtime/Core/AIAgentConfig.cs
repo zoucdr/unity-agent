@@ -20,6 +20,14 @@ namespace Unity3DAgent.Core
         [Header("Dynamic Skill Loader")]
         public SkillLoaderConfig SkillLoaderConfig = new SkillLoaderConfig();
 
+        [Header("Standard Skill Packages (Claude SKILL.md format)")]
+        [Tooltip("Enable automatic discovery and loading of standard Claude SKILL packages.")]
+        public bool StandardSkillsEnabled = true;
+        [Tooltip("Root directories to search recursively for SKILL.md skill packages.")]
+        public List<string> StandardSkillRootPaths = new List<string>();
+        [Tooltip("Per-skill enable/disable toggles for standard skill packages.")]
+        public List<SkillToggle> StandardSkillToggles = new List<SkillToggle>();
+
         [Header("MCP Configuration")]
         public List<MCPServerConfig> MCPServers = new List<MCPServerConfig>();
         public List<MCPToolToggle> MCPToolToggles = new List<MCPToolToggle>();

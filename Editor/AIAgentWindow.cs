@@ -26,6 +26,8 @@ namespace Unity3DAgent.Editor
         // skill loader UI state
         private string newFolderPath = "";
         private string newZipPath = "";
+        private string newStandardSkillRootPath = "";
+        private bool showStandardSkillDetails = false;
 
         // RAG UI state
         private string ragDocPath = "";
@@ -263,13 +265,113 @@ namespace Unity3DAgent.Editor
                 return;
             }
 
-            // Runtime toggle per skill
-            EditorGUILayout.LabelField($"Loaded Skills: {skillManager.LoadedSkills.Count}", EditorStyles.boldLabel);
+            // ---- Standard SKILL packages (Claude SKILL.md format) ----
+            EditorGUILayout.LabelField(
+                $"Standard Skill Packages (SKILL.md): {skillManager.StandardSkillPackages.Count}",
+                EditorStyles.boldLabel);
+            EditorGUILayout.Space(3);
+
+            if (skillManager.StandardSkillPackages.Count == 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "No standard skill packages loaded. Add a root directory containing SKILL.md packages below.",
+                    MessageType.Info);
+            }
+            else
+            {
+                showStandardSkillDetails = EditorGUILayout.Foldout(showStandardSkillDetails, "Show / Hide Package Details");
+
+                foreach (var pkg in skillManager.StandardSkillPackages)
+                {
+                    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                    EditorGUILayout.BeginHorizontal();
+
+                    bool newPkgEnabled = EditorGUILayout.Toggle(pkg.Enabled, GUILayout.Width(20));
+                    if (newPkgEnabled != pkg.Enabled)
+                        skillManager.SetStandardSkillPackageEnabled(pkg.Name, newPkgEnabled);
+
+                    var pkgColor = GUI.color;
+                    GUI.color = pkg.Enabled ? Color.green : Color.gray;
+                    EditorGUILayout.LabelField("●", GUILayout.Width(15));
+                    GUI.color = pkgColor;
+
+                    EditorGUILayout.LabelField(pkg.Name, EditorStyles.boldLabel);
+                    if (!string.IsNullOrEmpty(pkg.Version))
+                        EditorGUILayout.LabelField($"v{pkg.Version}", EditorStyles.miniLabel, GUILayout.Width(60));
+                    EditorGUILayout.EndHorizontal();
+
+                    if (!string.IsNullOrEmpty(pkg.Description))
+                        EditorGUILayout.LabelField(pkg.Description, EditorStyles.wordWrappedLabel);
+
+                    if (pkg.AllowedTools != null && pkg.AllowedTools.Count > 0)
+                        EditorGUILayout.LabelField($"Allowed tools: {string.Join(", ", pkg.AllowedTools)}", EditorStyles.miniLabel);
+
+                    if (!string.IsNullOrEmpty(pkg.Author))
+                        EditorGUILayout.LabelField($"Author: {pkg.Author}", EditorStyles.miniLabel);
+
+                    if (pkg.Metadata != null && pkg.Metadata.Count > 0)
+                    {
+                        var meta = string.Join(", ", pkg.Metadata.Select(kv => $"{kv.Key}={kv.Value}"));
+                        EditorGUILayout.LabelField($"Metadata: {meta}", EditorStyles.miniLabel);
+                    }
+
+                    if (showStandardSkillDetails && !string.IsNullOrEmpty(pkg.Instructions))
+                    {
+                        EditorGUILayout.LabelField("Instructions:", EditorStyles.miniLabel);
+                        const int maxPreview = 300;
+                        string preview;
+                        if (pkg.Instructions.Length > maxPreview)
+                        {
+                            // Find a safe truncation point that does not split a surrogate pair
+                            int cutAt = maxPreview;
+                            if (char.IsHighSurrogate(pkg.Instructions[cutAt - 1]))
+                                cutAt--;
+                            preview = pkg.Instructions.Substring(0, cutAt) + "…";
+                        }
+                        else
+                        {
+                            preview = pkg.Instructions;
+                        }
+                        EditorGUILayout.LabelField(preview, EditorStyles.wordWrappedMiniLabel);
+                    }
+
+                    if (!string.IsNullOrEmpty(pkg.SourcePath))
+                        EditorGUILayout.LabelField($"Path: {pkg.SourcePath}", EditorStyles.miniLabel);
+
+                    EditorGUILayout.EndVertical();
+                    EditorGUILayout.Space(3);
+                }
+            }
+
+            EditorGUILayout.Space(5);
+
+            // Load standard skill packages from a new root directory
+            EditorGUILayout.LabelField("Add Standard Skill Root Directory:", EditorStyles.miniLabel);
+            EditorGUILayout.BeginHorizontal();
+            newStandardSkillRootPath = EditorGUILayout.TextField(newStandardSkillRootPath);
+            if (GUILayout.Button("Browse", GUILayout.Width(60)))
+            {
+                var path = EditorUtility.OpenFolderPanel("Select Skill Packages Root", "", "");
+                if (!string.IsNullOrEmpty(path)) newStandardSkillRootPath = path;
+            }
+            if (GUILayout.Button("Load", GUILayout.Width(50)) && !string.IsNullOrEmpty(newStandardSkillRootPath))
+            {
+                skillManager.LoadStandardSkillPackagesFromPath(newStandardSkillRootPath);
+                Repaint();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(10);
+            DrawSeparator();
+            EditorGUILayout.Space(5);
+
+            // ---- Legacy skills (ScriptableObject / DLL / Zip) ----
+            EditorGUILayout.LabelField($"Legacy Skills (ScriptableObject): {skillManager.LoadedSkills.Count}", EditorStyles.boldLabel);
             EditorGUILayout.Space(5);
 
             if (skillManager.LoadedSkills.Count == 0)
             {
-                EditorGUILayout.HelpBox("No skills loaded. Add skill assets to Resources/Skills, or load from a folder/zip below.", MessageType.Info);
+                EditorGUILayout.HelpBox("No legacy skills loaded. Add skill assets to Resources/Skills, or load from a folder/zip below.", MessageType.Info);
             }
             else
             {
@@ -302,7 +404,7 @@ namespace Unity3DAgent.Editor
             EditorGUILayout.Space(10);
 
             // --- Dynamic loading ---
-            EditorGUILayout.LabelField("Dynamic Skill Loading", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Dynamic Skill Loading (DLL / Zip)", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             EditorGUILayout.LabelField("Load from folder (DLLs):", EditorStyles.miniLabel);
